@@ -11,23 +11,29 @@
     max-width: 640px; margin: 0 auto; padding: 2.5rem 1.25rem;
     line-height: 1.7; background: #fafafa; color: #1a1a1a;
   }
-  @media (prefers-color-scheme: dark) {
-    body { background: #16181c; color: #e8e8e8; }
-    a.card { background: #22252b; border-color: #333; }
-    a.card:hover { border-color: #4a90d9; }
-  }
   h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-  p.sub { color: #888; margin-top: 0; }
+  p.sub { color: #666; margin-top: 0; }
   a.card {
     display: block; padding: 1.1rem 1.25rem; margin: 0.9rem 0;
     border: 1px solid #e0e0e0; border-radius: 12px; background: #fff;
-    text-decoration: none; color: inherit; transition: border-color .15s;
+    text-decoration: none; color: #1a1a1a; transition: border-color .15s;
   }
   a.card:hover { border-color: #4a90d9; }
-  a.card b { display: block; font-size: 1.05rem; }
-  a.card span { color: #888; font-size: 0.9rem; }
+  a.card b { display: block; font-size: 1.05rem; color: inherit; }
+  a.card span { color: #777; font-size: 0.9rem; }
   footer { margin-top: 2rem; font-size: 0.85rem; color: #999; }
   footer a { color: #4a90d9; }
+
+  /* 深色模式：放在最後，確保覆蓋上面的淺色基礎規則 */
+  @media (prefers-color-scheme: dark) {
+    body { background: #16181c; color: #e8e8e8; }
+    p.sub { color: #a0a4ad; }
+    a.card { background: #22252b; border-color: #363a42; color: #e8e8e8; }
+    a.card:hover { border-color: #5aa0e0; }
+    a.card span { color: #9aa0aa; }
+    footer { color: #7a808a; }
+    footer a { color: #6ab0f0; }
+  }
 </style>
 </head>
 <body>
