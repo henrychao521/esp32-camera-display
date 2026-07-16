@@ -105,11 +105,13 @@
   <p class="sub">目標:相機畫面即時顯示在小螢幕上,並用搖桿操作拍照、濾鏡、相簿、錄影。最終完成的功能:</p>
   <ul class="feat">
     <li><b>Live View</b>即時取景(RGB565 → TFT)</li>
-    <li><b>Photo</b>點按搖桿拍照,存 JPEG 到 SD</li>
+    <li><b>Photo + EXIF</b>拍照存 JPEG,寫入拍攝時間</li>
     <li><b>Filter</b>濾鏡特效 + 亮度即時調整</li>
     <li><b>Gallery</b>相簿:翻看 SD 卡照片</li>
     <li><b>Video</b>錄影:MJPEG 存成 .avi</li>
-    <li><b>Menu</b>搖桿功能表(長按進入)</li>
+    <li><b>WiFi Send</b>熱點 + 網頁下載照片 + OTA</li>
+    <li><b>Screen Sleep</b>閒置關背光,搖桿喚醒</li>
+    <li><b>OV2640 / OV5640</b>相機可換,自動偵測</li>
   </ul>
 
   <h2><span class="idx">02</span>手上的零件</h2>
@@ -237,7 +239,73 @@
 
   </div>
 
-  <h2><span class="idx">05</span>學到的重點</h2>
+  <h2><span class="idx">05</span>功能演進(相機能動之後)</h2>
+  <p class="sub">畫面穩定後,把它從「會顯示的相機」一步步養成一台真正好用的裝置。</p>
+
+  <div class="tl">
+    <div class="step"><div class="dot">A</div>
+      <div class="card">
+        <div class="card-h"><span class="tag win">Feature</span><h3>拍照存 SD + EXIF 時間</h3></div>
+        <div class="card-b">
+          <div class="row"><div class="k">做了什麼</div><div class="v">點按搖桿拍照,存 JPEG 到 microSD(FAT32)。拍照時暫時切到相機<b>原生 JPEG</b>輸出(顏色正確),並在檔頭注入 <b>EXIF</b> 拍攝時間。</div></div>
+          <div class="row"><div class="k">踩到的雷</div><div class="v">起初用 <span class="m">frame2jpg</span> 轉檔,照片色彩損毀;真正根因是 XCLK 20MHz(見上面第 5 關),改 10MHz + 原生 JPEG 後解決。</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step"><div class="dot">B</div>
+      <div class="card">
+        <div class="card-h"><span class="tag win">Feature</span><h3>搖桿功能表:濾鏡 / 相簿 / 錄影</h3></div>
+        <div class="card-b">
+          <div class="row"><div class="k">做了什麼</div><div class="v">長按進功能表,搖桿上下選、點按進入。<b>濾鏡</b>(黑白/負片/復古…+亮度)、<b>相簿</b>(TJpg 解碼翻看 SD 照片)、<b>錄影</b>(MJPEG 存 .avi,含 AVI 檔頭修補)。</div></div>
+          <div class="row"><div class="k">狀態機</div><div class="v">用單一狀態機管理 LIVE / MENU / FILTER / GALLERY / VIDEO / WIFI 各模式。</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step"><div class="dot">C</div>
+      <div class="card">
+        <div class="card-h"><span class="tag win">Feature</span><h3>WiFi 傳照片(熱點 + 網頁 + OTA)</h3></div>
+        <div class="card-b">
+          <div class="row"><div class="k">做了什麼</div><div class="v">功能表開 <b>WiFi 熱點</b>,手機加入後 <b>Captive Portal</b> 自動彈出網頁相簿,可瀏覽/下載照片;還能上傳 <b>.bin 做 OTA</b> 無線更新。</div></div>
+          <div class="row"><div class="k">對時</div><div class="v">AP 模式沒網路無法 NTP → 改由<b>手機瀏覽器</b>連上時把時間傳給裝置,之後拍照就有 EXIF 時間。免 App。</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step"><div class="dot">D</div>
+      <div class="card">
+        <div class="card-h"><span class="tag win">Feature</span><h3>螢幕自動關閉 + 搖桿喚醒</h3></div>
+        <div class="card-b">
+          <div class="row"><div class="k">做了什麼</div><div class="v">閒置 30 秒自動關螢幕,按搖桿喚醒(喚醒那一下只喚醒、不誤觸)。錄影/傳輸中不關。</div></div>
+          <div class="row"><div class="k">真正省電</div><div class="v">把顯示器 <span class="m">BLK</span> 背光線從 3V3 改接 <b>D6(GPIO43)</b>,用程式完全關背光,而非只是畫面變黑。</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step"><div class="dot">E</div>
+      <div class="card">
+        <div class="card-h"><span class="tag compile">研究後放棄</span><h3>BLE 開機自動對時(iPhone CTS)</h3></div>
+        <div class="card-b">
+          <div class="row"><div class="k">構想</div><div class="v">開機用藍牙自動跟 iPhone 對時,讓離線也有正確時間。</div></div>
+          <div class="row"><div class="k">查證結論</div><div class="v">iOS <b>不會</b>穩定、免 App 地對任意 BLE 裝置提供系統時間(Espressif CTS 是「裝置當時間伺服器」,社群實測需自製 App 或改用 GPS)。</div></div>
+          <div class="row"><div class="k">決定</div><div class="v">誠實記錄:<b>不硬做</b>,改用已完成的「網頁對時」。避免白工也是一種工程判斷。</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step"><div class="dot">F</div>
+      <div class="card">
+        <div class="card-h"><span class="tag win">Upgrade</span><h3>升級 OV5640(500 萬畫素)</h3></div>
+        <div class="card-b">
+          <div class="row"><div class="k">好消息</div><div class="v">OV5640 與 OV2640 <b>同接頭</b>,驅動自動偵測,接線與腳位檔完全不用改。</div></div>
+          <div class="row"><div class="k">要調整</div><div class="v">XCLK 改回 <b>20MHz</b>(OV5640 建議值);安裝方向不同,把 <span class="m">CAM_VFLIP</span> 設 0 修正上下顛倒。</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2><span class="idx">06</span>學到的重點</h2>
   <ul class="feat">
     <li><b>版本相依</b>函式庫與核心版本要對上(periman.h、顏色常數都是版本坑)</li>
     <li><b>位元序</b>相機 RGB565 是大端序;顯示、編碼、解碼各有各的位元序設定</li>
@@ -245,12 +313,15 @@
     <li><b>原生 JPEG</b>拍照/錄影走相機原生 JPEG,避開 RGB565 轉檔的坑</li>
     <li><b>共用 SPI</b>顯示器與 SD 卡共用匯流排,讀檔要讀滿、注意時序</li>
     <li><b>先分而治之</b>把「檔案壞」與「顯示壞」分開驗證(拔卡到電腦看),少走冤枉路</li>
+    <li><b>知道何時收手</b>BLE 自動對時查證後不可行就放棄,避免白工也是工程判斷</li>
+    <li><b>省電看硬體</b>要真正關背光,得能用 GPIO 控制 BLK 腳,不只是畫面變黑</li>
+    <li><b>自動偵測好處多</b>換 OV5640 免改腳位,只需調 XCLK 與畫面方向</li>
   </ul>
 
   <div class="note"><b>關於失敗畫面:</b>本頁的損毀/雜訊/偏色畫面是用程式<b>重現</b>當時的樣子(示意),方便理解各關卡的症狀差異。若要換成實機拍下的真實照片,把照片放進 <span class="m">images/</span> 後替換對應區塊即可。</div>
 
   <footer>
-    <span>XIAO ESP32-S3 · ILI9341 · OV2640</span>
+    <span>XIAO ESP32-S3 · ILI9341 · OV2640 / OV5640 · SD · WiFi</span>
     <span>Build Log · 2026</span>
   </footer>
 </div>

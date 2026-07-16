@@ -1,5 +1,6 @@
 // camera_pins.h
-// OV2640 腳位定義 for Seeed Studio XIAO ESP32-S3 Sense
+// 相機腳位定義 for Seeed Studio XIAO ESP32-S3 Sense
+// OV2640 與 OV5640 共用同一排線接頭,腳位相同(驅動自動偵測型號),本檔通用
 // 這些腳位是「Sense」擴充板透過底部 B2B 連接器內部走線，
 // 不會佔用外露的 D0~D10 排針，所以顯示器/搖桿可自由使用外露腳位。
 
