@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>動手做相機｜暑假自由研究</title>
+<style>
+  :root{
+    --bg:#fff7ed; --ink:#3a2f28; --soft:#6b5d52; --card:#ffffff;
+    --line:#f0e2d2; --sun:#f6a821; --sky:#3aa0e0; --leaf:#3bae72;
+    --grape:#8a63d2; --rose:#ec5a72; --try:#eafaf0; --tryline:#bfe8cf;
+    --warn:#fff3f2; --warnline:#f6c9c4;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"PingFang TC","Noto Sans TC",-apple-system,system-ui,sans-serif;
+    line-height:1.85; font-size:18px;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:26px 18px 70px}
+  header.hero{
+    text-align:center; padding:34px 18px 26px; border-radius:26px;
+    background:linear-gradient(135deg,#ffe3a3,#ffd0d8 55%,#cfe9ff);
+    box-shadow:0 10px 30px rgba(180,140,80,.18);
+  }
+  header.hero .emoji{font-size:60px; line-height:1}
+  header.hero h1{font-size:34px; margin:.3em 0 .1em; letter-spacing:1px}
+  header.hero p{font-size:17px; color:#5a4a3c; margin:.3em auto 0; max-width:30em}
+  .tag{display:inline-block; background:#fff; color:#b06a12; font-weight:800;
+    border-radius:999px; padding:5px 14px; font-size:14px; margin-top:14px;
+    box-shadow:0 3px 10px rgba(0,0,0,.06)}
+  section{background:var(--card); border:2px solid var(--line); border-radius:22px;
+    padding:22px 20px; margin:22px 0; box-shadow:0 6px 18px rgba(180,150,110,.08)}
+  h2{font-size:24px; margin:.1em 0 .5em; display:flex; align-items:center; gap:10px}
+  h2 .n{background:var(--sun); color:#fff; font-size:16px; width:34px; height:34px;
+    border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none}
+  h3{font-size:19px; margin:1em 0 .3em}
+  b{color:#c0561a}
+  figure{margin:16px 0; text-align:center}
+  figure svg{max-width:100%; height:auto; background:#fbfdff; border-radius:16px;
+    border:1px solid #e7eef4; padding:8px}
+  figcaption{font-size:14px; color:var(--soft); margin-top:8px}
+  .try, .warn, .know{border-radius:16px; padding:14px 16px; margin:16px 0}
+  .try{background:var(--try); border:2px dashed var(--tryline)}
+  .try .h{font-weight:800; color:#1f8a4c}
+  .warn{background:var(--warn); border:2px solid var(--warnline)}
+  .warn .h{font-weight:800; color:#d0342b}
+  .know{background:#f3f0ff; border:2px solid #ddd3f5}
+  .know .h{font-weight:800; color:#6a48c0}
+  .try .h,.warn .h,.know .h{display:block; margin-bottom:3px}
+  ul,ol{padding-left:1.3em} li{margin:.25em 0}
+  .dl{display:grid; gap:12px; margin-top:8px}
+  a.btn{display:flex; align-items:center; gap:12px; text-decoration:none;
+    background:linear-gradient(135deg,#ffcf7a,#ffb454); color:#5a3a06; font-weight:800;
+    padding:15px 18px; border-radius:16px; font-size:18px; box-shadow:0 5px 14px rgba(240,160,40,.3)}
+  a.btn.alt{background:#eef4fb; color:#2b6ea3; box-shadow:none; border:2px solid #d5e6f4}
+  a.btn .big{font-size:26px}
+  a.btn small{display:block; font-weight:600; color:#7a5a2a; font-size:13px}
+  a.btn.alt small{color:#5a7fa0}
+  .links{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px}
+  .links a{text-decoration:none; background:#fff; border:2px solid var(--line);
+    border-radius:999px; padding:8px 15px; color:#8a5a20; font-weight:700; font-size:15px}
+  footer{text-align:center; color:var(--soft); font-size:14px; margin-top:30px}
+  footer a{color:#c07a2a}
+  .steps{counter-reset:s; list-style:none; padding:0}
+  .steps li{position:relative; padding:6px 0 6px 44px; margin:.4em 0}
+  .steps li::before{counter-increment:s; content:counter(s); position:absolute; left:0; top:4px;
+    background:var(--sky); color:#fff; width:30px; height:30px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px}
+  @media (prefers-color-scheme: dark){
+    :root{--bg:#20211c; --ink:#ece6da; --soft:#a9a094; --card:#2a2b24; --line:#3a3a30;
+      --try:#1e2a20; --tryline:#345c42; --warn:#2c1f1e; --warnline:#6a3a36}
+    header.hero{background:linear-gradient(135deg,#6b5626,#6a3a44 55%,#294a63)}
+    header.hero p{color:#e6dccd}
+    .tag{background:#3a3a30; color:#ffcf7a}
+    .know{background:#282338; border-color:#443a5e}
+    figure svg{background:#20242a; border-color:#33383f}
+    a.btn.alt{background:#252a30; color:#8fc0ea; border-color:#3a444d}
+    a.btn.alt small{color:#7d9cb5}
+    .links a{background:#2a2b24; color:#ffcf7a}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="emoji">📷✨</div>
+    <h1>動手做相機</h1>
+    <p>光怎麼跑？透鏡怎麼把畫面變清楚？鏡子怎麼讓光轉彎？相機又用什麼「記住」看到的東西？<br>這個暑假，我們先搞懂祕密，再自己做一台真的會拍照的相機！</p>
+    <span class="tag">🌞 暑假自由研究 · 國小中高年級</span>
+  </header>
+
+  <section>
+    <h2><span class="n">1</span>☀️ 光，是直直走的</h2>
+    <p>白天我們能看見東西,是因為<b>光</b>從太陽或電燈出發,碰到東西後<b>反彈</b>進我們的眼睛。這裡有個超重要的祕密:<b>光會沿著直線一直走</b>,不會自己轉彎。</p>
+    <p>相機也是靠光才能「看見」。我們先用最簡單的方法,把光「畫」到紙上。</p>
+
+    <figure>
+      <svg viewBox="0 0 620 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="針孔成像:光穿過小洞後,上下顛倒">
+        <!-- 物體:向上箭頭(蠟燭) -->
+        <line x1="70" y1="60" x2="70" y2="170" stroke="#ec5a72" stroke-width="8" stroke-linecap="round"/>
+        <polygon points="70,44 58,70 82,70" fill="#f6a821"/>
+        <text x="70" y="200" text-anchor="middle" font-size="15" fill="#6b5d52">物體</text>
+        <!-- 盒子 -->
+        <rect x="300" y="40" width="30" height="160" rx="6" fill="#cbb79a"/>
+        <circle cx="315" cy="120" r="6" fill="#20242a"/>
+        <text x="315" y="228" text-anchor="middle" font-size="14" fill="#6b5d52">小洞</text>
+        <!-- 光線穿過小洞交叉 -->
+        <line x1="70" y1="52" x2="560" y2="180" stroke="#f6a821" stroke-width="2.5" stroke-dasharray="6 5"/>
+        <line x1="70" y1="165" x2="560" y2="66" stroke="#3aa0e0" stroke-width="2.5" stroke-dasharray="6 5"/>
+        <!-- 屏幕上的倒立像 -->
+        <line x1="560" y1="66" x2="560" y2="180" stroke="#ec5a72" stroke-width="7" stroke-linecap="round" opacity=".85"/>
+        <polygon points="560,196 549,172 571,172" fill="#f6a821" opacity=".85"/>
+        <text x="560" y="222" text-anchor="middle" font-size="15" fill="#6b5d52">倒立的像</text>
+      </svg>
+      <figcaption>光直直走 → 上面的光跑到下面、下面的光跑到上面,所以畫面「上下顛倒」!</figcaption>
+    </figure>
+
+    <div class="try">
+      <span class="h">🖐️ 動手試試看:自己做針孔相機</span>
+      <b>材料:</b>鞋盒或紙筒、圖釘、一張半透明的紙(描圖紙、烘焙紙都行)、膠帶。<br>
+      <b>做法:</b>盒子一端用圖釘戳一個小洞,另一端貼上半透明紙。走到明亮的窗戶或路燈前,眼睛靠近半透明紙那端看——會出現一個<b>上下顛倒</b>的淡淡畫面!洞越小畫面越清楚(但也越暗)。
+    </div>
+    <div class="know"><span class="h">💡 小知識</span>這就是最早的相機原理,叫「暗箱」(camera obscura),幾百年前的畫家就用它來描景。</div>
+  </section>
+
+  <section>
+    <h2><span class="n">2</span>🔍 透鏡,把光聚在一起</h2>
+    <p>針孔的畫面太暗、也不夠清楚。怎麼辦?讓<b>透鏡</b>幫忙!透鏡就是<b>放大鏡</b>那種中間厚、邊緣薄的玻璃,叫「凸透鏡」。它可以把很多條光<b>聚集到一個點</b>,讓畫面又亮又清楚。</p>
+
+    <figure>
+      <svg viewBox="0 0 620 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="凸透鏡把平行光聚到焦點">
+        <!-- 平行光 -->
+        <g stroke="#f6a821" stroke-width="2.5">
+          <line x1="40" y1="55" x2="300" y2="55"/>
+          <line x1="40" y1="105" x2="300" y2="105"/>
+          <line x1="40" y1="155" x2="300" y2="155"/>
+        </g>
+        <!-- 透鏡 -->
+        <ellipse cx="300" cy="105" rx="26" ry="80" fill="#bfe4ff" stroke="#3aa0e0" stroke-width="3"/>
+        <!-- 聚焦 -->
+        <g stroke="#ec5a72" stroke-width="2.5">
+          <line x1="300" y1="55" x2="470" y2="105"/>
+          <line x1="300" y1="105" x2="470" y2="105"/>
+          <line x1="300" y1="155" x2="470" y2="105"/>
+        </g>
+        <circle cx="470" cy="105" r="7" fill="#ec5a72"/>
+        <text x="470" y="135" text-anchor="middle" font-size="15" fill="#6b5d52">焦點</text>
+        <text x="150" y="40" text-anchor="middle" font-size="14" fill="#b06a12">一條一條的光</text>
+        <text x="300" y="200" text-anchor="middle" font-size="14" fill="#2b6ea3">凸透鏡</text>
+      </svg>
+      <figcaption>凸透鏡把很多條光聚到「焦點」,畫面就變亮、變清楚。</figcaption>
+    </figure>
+
+    <p>相機的<b>鏡頭</b>其實是好幾片透鏡疊在一起。而「<b>對焦</b>」,就是把透鏡前後移動一點點,找到畫面<b>最清楚</b>的位置。我們這台相機如果換上 <b>OV5640</b> 鏡頭,它還會<b>自己對焦</b>呢!</p>
+
+    <div class="try">
+      <span class="h">🖐️ 動手試試看:放大鏡投影</span>
+      找一張白紙,用放大鏡對著明亮的窗戶,把窗戶的畫面投到紙上,慢慢前後移動放大鏡——會出現一個清楚又<b>倒立</b>的小窗戶!這就是相機鏡頭在做的事。
+    </div>
+    <div class="warn">
+      <span class="h">⚠️ 安全第一</span>
+      <b>絕對不要</b>用放大鏡看太陽,也<b>不要</b>把陽光長時間聚在紙上、衣服上或皮膚上——聚起來的光很燙,會燒起來!這個實驗請找大人一起做。
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">3</span>🪞 鏡子,讓光轉彎</h2>
+    <p>光雖然直直走,但碰到<b>鏡子</b>會像球一樣<b>反彈</b>回去,這叫「<b>反射</b>」。而且很神奇:<b>光進來的角度,等於出去的角度</b>。</p>
+
+    <figure>
+      <svg viewBox="0 0 620 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="光碰到鏡子反射,入射角等於反射角">
+        <!-- 鏡面 -->
+        <line x1="120" y1="150" x2="500" y2="150" stroke="#3aa0e0" stroke-width="6"/>
+        <g stroke="#bfe4ff" stroke-width="4">
+          <line x1="140" y1="150" x2="128" y2="164"/><line x1="200" y1="150" x2="188" y2="164"/>
+          <line x1="260" y1="150" x2="248" y2="164"/><line x1="320" y1="150" x2="308" y2="164"/>
+          <line x1="380" y1="150" x2="368" y2="164"/><line x1="440" y1="150" x2="428" y2="164"/>
+        </g>
+        <!-- 法線 -->
+        <line x1="310" y1="60" x2="310" y2="150" stroke="#b0a595" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <!-- 入射 / 反射 -->
+        <line x1="150" y1="55" x2="310" y2="150" stroke="#f6a821" stroke-width="3.5"/>
+        <polygon points="310,150 292,138 300,128" fill="#f6a821"/>
+        <line x1="310" y1="150" x2="470" y2="55" stroke="#ec5a72" stroke-width="3.5"/>
+        <polygon points="470,55 452,60 458,72" fill="#ec5a72"/>
+        <text x="180" y="50" font-size="14" fill="#b06a12">光進來</text>
+        <text x="420" y="50" font-size="14" fill="#c23a52">光反彈</text>
+      </svg>
+      <figcaption>入射角 = 反射角。鏡子就是靠這個規則,讓我們看到「轉彎後」的畫面。</figcaption>
+    </figure>
+
+    <p>很多地方都用到反射:<b>潛望鏡</b>用兩片鏡子,讓你看到牆角另一邊或高處;有些大型相機(單眼)裡也藏了一片<b>反光鏡</b>,把畫面送到觀景窗給你看。</p>
+    <div class="try">
+      <span class="h">🖐️ 動手試試看:迷你潛望鏡</span>
+      拿兩片小鏡子(或鏡面卡紙),斜斜地裝在長紙盒的上下兩端,面對面。從下面的洞看進去,就能看到頭頂上方或轉角的東西啦!
+    </div>
+    <div class="know"><span class="h">💡 我們這台相機</span>用<b>螢幕</b>直接看畫面,不需要反光鏡;但反射的原理,在生活裡到處都用得到。</div>
+  </section>
+
+  <section>
+    <h2><span class="n">4</span>🔢 感光元件,把光變成數字</h2>
+    <p>光被鏡頭聚進來以後,要有東西把它「記住」。我們的眼睛用<b>視網膜</b>,以前的相機用<b>底片</b>,現在的數位相機用一塊小晶片,叫<b>感光元件</b>。</p>
+    <p>感光元件上面有<b>好多好多小格子</b>,每一格叫一個「<b>像素</b>」。每一格會量到<b>光的多少和顏色</b>,再變成<b>數字</b>。把所有數字排好,就拼成一張照片——就像用很多小磁磚拼出一幅畫!</p>
+
+    <figure>
+      <svg viewBox="0 0 620 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="感光元件由許多像素小格組成,拼出畫面">
+        <text x="90" y="30" text-anchor="middle" font-size="14" fill="#6b5d52">遠看:一張圖</text>
+        <text x="470" y="30" text-anchor="middle" font-size="14" fill="#6b5d52">近看:一格一格</text>
+        <!-- 左:平滑天空+太陽 -->
+        <rect x="30" y="45" width="120" height="120" rx="10" fill="#bfe4ff"/>
+        <circle cx="120" cy="80" r="18" fill="#f6a821"/>
+        <path d="M45 150 Q90 120 150 145 L150 165 L45 165 Z" fill="#3bae72"/>
+        <!-- 箭頭 -->
+        <text x="300" y="112" text-anchor="middle" font-size="30" fill="#8a63d2">🔍→</text>
+        <!-- 右:像素網格 -->
+        <g>
+          <!-- 生成 6x6 馬賽克(手繪幾格代表) -->
+          <rect x="410" y="45" width="120" height="120" rx="10" fill="#eef" />
+        </g>
+        <g stroke="#fff" stroke-width="1.5">
+          <!-- 天空藍 -->
+          <rect x="410" y="45" width="120" height="60" fill="#bfe4ff"/>
+          <!-- 太陽區 -->
+          <rect x="470" y="45" width="40" height="40" fill="#f6a821"/>
+          <rect x="450" y="65" width="20" height="20" fill="#ffd27a"/>
+          <!-- 草地 -->
+          <rect x="410" y="125" width="120" height="40" fill="#3bae72"/>
+          <rect x="410" y="105" width="120" height="20" fill="#7fce9d"/>
+          <!-- 網格線 -->
+          <g stroke="#ffffff" stroke-width="2">
+            <line x1="430" y1="45" x2="430" y2="165"/><line x1="450" y1="45" x2="450" y2="165"/>
+            <line x1="470" y1="45" x2="470" y2="165"/><line x1="490" y1="45" x2="490" y2="165"/>
+            <line x1="510" y1="45" x2="510" y2="165"/>
+            <line x1="410" y1="65" x2="530" y2="65"/><line x1="410" y1="85" x2="530" y2="85"/>
+            <line x1="410" y1="105" x2="530" y2="105"/><line x1="410" y1="125" x2="530" y2="125"/>
+            <line x1="410" y1="145" x2="530" y2="145"/>
+          </g>
+        </g>
+        <rect x="410" y="45" width="120" height="120" rx="10" fill="none" stroke="#c9c2ee" stroke-width="2"/>
+      </svg>
+      <figcaption>照片其實是好多小格子(像素)拼出來的。格子越多,照片越細緻。</figcaption>
+    </figure>
+
+    <p>我們相機用的感光元件叫 <b>OV2640</b> 或 <b>OV5640</b>。一張畫面有 <b>30 萬</b>(OV2640)到 <b>500 萬</b>(OV5640)個小格子——難怪能拍出這麼清楚的照片!</p>
+  </section>
+
+  <section>
+    <h2><span class="n">5</span>🛠️ 我們這台相機長怎樣?</h2>
+    <p>把上面學到的合起來,一句話就懂:</p>
+    <p style="text-align:center; font-size:19px; background:#fff7e6; border-radius:14px; padding:14px; border:2px dashed #f3d79a">
+      🔍 鏡頭聚光 → 🔢 感光元件變數字 → 🧠 小電腦處理 → 📺 螢幕看畫面 → 🕹️ 按搖桿存成照片
+    </p>
+    <h3>用到的零件</h3>
+    <ul>
+      <li><b>XIAO ESP32-S3 Sense</b>:一顆小小的電腦,還自帶鏡頭</li>
+      <li><b>2.4 吋螢幕</b>:看即時畫面</li>
+      <li><b>搖桿</b>:拍照、選單、移動對焦點</li>
+      <li><b>麵包板 + 杜邦線</b>:不用焊接就能把它們接起來</li>
+    </ul>
+    <h3>做好以後會的功能</h3>
+    <p>即時看畫面、拍照、加濾鏡、看相簿、錄影,還能用手機連 WiFi 把照片傳出來 📱。</p>
+  </section>
+
+  <section>
+    <h2><span class="n">6</span>🌞 暑假挑戰!跟著做</h2>
+    <ol class="steps">
+      <li>先<b>只接螢幕</b>(電源、GND、和 5 條訊號線),確認螢幕會亮。</li>
+      <li>把下面的<b>程式燒到 XIAO</b>,就能看到即時畫面了。</li>
+      <li>再<b>接上搖桿</b>,就能拍照、開選單。</li>
+      <li><b>插一張記憶卡</b>(格式化成 FAT32),拍的照片就會存起來。</li>
+    </ol>
+    <p>詳細的接線圖和每一步的做法,都在這兩個頁面:</p>
+    <div class="links">
+      <a href="wiring-guide.html">🔌 互動接線圖</a>
+      <a href="devlog.html">📝 開發歷程(含踩雷筆記)</a>
+    </div>
+    <div class="warn">
+      <span class="h">⚠️ 要找大人幫忙的地方</span>
+      焊接(用到高溫烙鐵)、鋰電池、還有放大鏡聚光的實驗,都要請<b>爸媽或老師</b>陪你一起做,注意安全喔!
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">7</span>💾 下載程式</h2>
+    <p>這台相機的程式是<b>免費、公開</b>的,你可以下載回去,用 <b>Arduino</b> 軟體打開,再燒到 XIAO 上。</p>
+    <div class="dl">
+      <a class="btn" href="https://github.com/henrychao521/esp32-camera-display/archive/refs/heads/main.zip">
+        <span class="big">📦</span>
+        <span>下載整包程式(ZIP)<small>解壓縮後,用 Arduino 開 camera_display.ino</small></span>
+      </a>
+      <a class="btn alt" href="https://github.com/henrychao521/esp32-camera-display/blob/main/camera_display.ino">
+        <span class="big">📄</span>
+        <span>直接看主程式 camera_display.ino<small>在 GitHub 上線上瀏覽程式碼</small></span>
+      </a>
+      <a class="btn alt" href="https://github.com/henrychao521/esp32-camera-display">
+        <span class="big">🗂️</span>
+        <span>全部檔案與說明(GitHub)<small>接線圖、程式、開發歷程都在這裡</small></span>
+      </a>
+    </div>
+    <div class="know"><span class="h">💡 需要準備的軟體</span>電腦上裝好免費的 <b>Arduino IDE</b>,加上 ESP32 開發板套件,就能燒錄。詳細步驟看「開發歷程」那頁。</div>
+  </section>
+
+  <section>
+    <h2><span class="n">8</span>👨‍👩‍👧 給爸媽和老師的話</h2>
+    <ul>
+      <li>本專案適合<b>國小中高年級 + 家長/老師協助</b>完成,可當暑假自由研究或社團教材。</li>
+      <li>牽涉<b>高溫焊接、鋰電池、放大鏡聚光</b>的環節,請務必有大人在旁陪同。</li>
+      <li>這是<b>開源專案</b>,程式與教學可自由用於課堂與自學。歡迎改造成自己的相機!</li>
+    </ul>
+  </section>
+
+  <footer>
+    這台相機的完整故事,見 <a href="devlog.html">開發歷程</a> 與 <a href="https://github.com/henrychao521/esp32-camera-display">GitHub</a>。<br>
+    祝你有個好玩的暑假 🌈
+  </footer>
+
+</div>
+</body>
+</html>
