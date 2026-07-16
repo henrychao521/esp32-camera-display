@@ -307,6 +307,7 @@
           <div class="row"><div class="k">Tap-to-focus</div><div class="v">即時取景時搖桿移動準星,對焦到該點(韌體命令 <span class="m">0x81</span> + 座標 <span class="m">0x3024/0x3025</span>),閒置 3 秒回全畫面連續對焦。</div></div>
           <div class="row"><div class="k">架構調整</div><div class="v">切換 RGB565⇄JPEG 會重置感光元件、AF 韌體要重載,拍照因此卡頓。改成<b>即時取景全程 JPEG</b>(TJpg 解碼上螢幕),AF 開機載一次、拍照不再切格式,順又穩。</div></div>
           <div class="row"><div class="k">為何不用 YOLO</div><div class="v">對焦是<b>對比度</b>問題,不是「認出物體」——OV5640 韌體靠影像銳利度自己收斂,YOLO 只給位置、幫不上對焦;何況 ESP32-S3 跑 YOLO &lt;1fps、延遲太高。要主體對焦該用更輕的 ESP-DL 人臉偵測;物件辨識則留給「相簿離線標記」。</div></div>
+          <div class="row"><div class="k">實測</div><div class="v"><b>已上板驗證</b>:方向修正、連續對焦、拍照鎖焦、搖桿 tap-to-focus 準星均正常運作(觸控對焦區域座標視模組可再微調)。</div></div>
         </div>
       </div>
     </div>
