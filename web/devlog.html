@@ -299,10 +299,14 @@
 
     <div class="step"><div class="dot">F</div>
       <div class="card">
-        <div class="card-h"><span class="tag win">Upgrade</span><h3>升級 OV5640(500 萬畫素)</h3></div>
+        <div class="card-h"><span class="tag win">Upgrade</span><h3>升級 OV5640(500 萬畫素 + 自動對焦)</h3></div>
         <div class="card-b">
-          <div class="row"><div class="k">好消息</div><div class="v">OV5640 與 OV2640 <b>同接頭</b>,驅動自動偵測,接線與腳位檔完全不用改。</div></div>
-          <div class="row"><div class="k">要調整</div><div class="v">XCLK 改回 <b>20MHz</b>(OV5640 建議值);安裝方向不同,把 <span class="m">CAM_VFLIP</span> 設 0 修正上下顛倒。</div></div>
+          <div class="row"><div class="k">好消息</div><div class="v">OV5640 與 OV2640 <b>同接頭</b>,驅動自動偵測(PID=0x5640),接線與腳位檔完全不用改。</div></div>
+          <div class="row"><div class="k">方向</div><div class="v">XCLK 用 <b>20MHz</b>(OV5640 建議值);此模組裝上後畫面上下顛倒,把 <span class="m">CAM_VFLIP</span> 設 <b>1</b> 修正(若左右也反再把 HMIRROR 設 1）。</div></div>
+          <div class="row"><div class="k">自動對焦</div><div class="v">OV5640 有 VCM 對焦馬達。用函式庫 <span class="m">ESP32-OV5640-AF</span>:開機 <span class="m">focusInit()</span> 下載對焦韌體 → <span class="m">autoFocusMode()</span> 連續對焦;拍照前等 <span class="m">getFWStatus()==0x10</span> 鎖焦再擷取。硬體上 <b>AF-VCC 要接 3.3V</b> 馬達才會動。</div></div>
+          <div class="row"><div class="k">Tap-to-focus</div><div class="v">即時取景時搖桿移動準星,對焦到該點(韌體命令 <span class="m">0x81</span> + 座標 <span class="m">0x3024/0x3025</span>),閒置 3 秒回全畫面連續對焦。</div></div>
+          <div class="row"><div class="k">架構調整</div><div class="v">切換 RGB565⇄JPEG 會重置感光元件、AF 韌體要重載,拍照因此卡頓。改成<b>即時取景全程 JPEG</b>(TJpg 解碼上螢幕),AF 開機載一次、拍照不再切格式,順又穩。</div></div>
+          <div class="row"><div class="k">為何不用 YOLO</div><div class="v">對焦是<b>對比度</b>問題,不是「認出物體」——OV5640 韌體靠影像銳利度自己收斂,YOLO 只給位置、幫不上對焦;何況 ESP32-S3 跑 YOLO &lt;1fps、延遲太高。要主體對焦該用更輕的 ESP-DL 人臉偵測;物件辨識則留給「相簿離線標記」。</div></div>
         </div>
       </div>
     </div>

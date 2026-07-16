@@ -4,7 +4,8 @@
  * 迷你相機:XIAO ESP32-S3 Sense (OV2640 或 OV5640) → 2.4" ILI9341 SPI TFT
  *   換 OV5640:接線/腳位不變(自動偵測),CAM_XCLK_HZ 設 20000000;自動對焦自動啟用;
  *             本機換 OV5640 後畫面上下顛倒,已把 CAM_VFLIP 設 1
- *   相機模式 :即時取景。點按搖桿=拍照;長按=開功能表
+ *   相機模式 :即時取景(全程 JPEG)。點按搖桿=拍照;長按=開功能表;
+ *             OV5640 時搖桿方向=移動對焦準星 tap-to-focus(閒置 3 秒回連續對焦)
  *   功能表   :搖桿上下選、點按進入、長按回相機
  *     - Filter   濾鏡 :左右切特效、上下調亮度、點按返回
  *     - Gallery  相簿 :左右翻看 SD 照片、點按返回
@@ -115,8 +116,8 @@ OV5640 ov5640 = OV5640();
 bool isOV5640 = false;    // 開機時依感光元件 PID 偵測
 bool afReady  = false;    // AF 韌體是否載入成功
 
-// 每次相機 (重新) 初始化後呼叫:偵測 OV5640 → 下載 AF 韌體 → 開啟連續對焦。
-// 注意:切換 RGB565⇄JPEG 會重置感光元件,AF 韌體需重載,所以放在 initCamera() 尾端統一處理。
+// 相機初始化後呼叫:偵測 OV5640 → 下載 AF 韌體 → 開啟連續對焦。
+// 相機全程 JPEG、不再切換格式,所以 AF 韌體開機載入一次即可(放在 initCamera() 尾端)。
 void initAutofocus() {
   sensor_t *s = esp_camera_sensor_get();
   isOV5640 = (s && s->id.PID == 0x5640);   // OV5640 PID = 0x5640
@@ -139,6 +140,40 @@ void afWaitFocused(uint32_t waitMs) {
     if (ov5640.getFWStatus() == 0x10) return;   // FW_STATUS_S_FOCUSED
     delay(30);
   }
+}
+
+// ---- Tap-to-focus:即時取景時用搖桿移動準星,對焦到該點 ----
+int  reticleX = 160, reticleY = 120;   // 螢幕座標(landscape 320x240 的中心)
+bool reticleOn = false;
+unsigned long reticleShownMs = 0;
+
+// 觸控對焦到準星位置(OV5640 韌體命令 0x81);座標為粗略區域,不同模組可能需微調
+void afFocusAtReticle() {
+  if (!afReady) return;
+  sensor_t *s = esp_camera_sensor_get();
+  if (!s) return;
+  int zx = (int)((long)reticleX * 0x50 / gfx->width());   // → 0..0x50(水平區域)
+  int zy = (int)((long)reticleY * 0x3C / gfx->height());  // → 0..0x3C(垂直區域)
+  s->set_reg(s, 0x3024, 0xff, zx);      // CMD_PARA0 = x
+  s->set_reg(s, 0x3025, 0xff, zy);      // CMD_PARA1 = y
+  s->set_reg(s, 0x3022, 0xff, 0x81);    // CMD_MAIN  = 觸控對焦
+}
+
+// 回到全畫面連續對焦
+void afContinuous() {
+  if (!afReady) return;
+  sensor_t *s = esp_camera_sensor_get();
+  if (s) s->set_reg(s, 0x3022, 0xff, 0x04);   // 連續對焦
+}
+
+// 畫準星(只在 LIVE 且準星啟用時);對焦完成轉綠
+void drawReticle() {
+  if (!reticleOn || mode != LIVE) return;
+  uint16_t c = (afReady && ov5640.getFWStatus() == 0x10) ? COL_GREEN : COL_WHITE;
+  int r = 16;
+  gfx->drawRect(reticleX - r, reticleY - r, r * 2, r * 2, c);
+  gfx->drawFastHLine(reticleX - 4, reticleY, 8, c);
+  gfx->drawFastVLine(reticleX, reticleY - 4, 8, c);
 }
 
 // ------------------------------------------------------------------
@@ -166,7 +201,7 @@ bool initCamera(pixformat_t fmt) {
   config.pin_pwdn = PWDN_GPIO_NUM;   config.pin_reset = RESET_GPIO_NUM;
   config.xclk_freq_hz = CAM_XCLK_HZ;      // OV5640=20MHz / OV2640=10MHz(見頂部 CAM_XCLK_HZ)
   config.frame_size   = FRAMESIZE_QVGA;   // 320x240(即時取景;相機會自動偵測 OV2640/OV5640)
-  config.pixel_format = fmt;              // RGB565(取景) 或 JPEG(錄影)
+  config.pixel_format = fmt;              // 全程 JPEG(取景/拍照/錄影同一格式)
   config.grab_mode    = CAMERA_GRAB_LATEST;
   config.fb_location  = CAMERA_FB_IN_PSRAM;
   config.jpeg_quality = 12;
@@ -177,11 +212,6 @@ bool initCamera(pixformat_t fmt) {
   applySensor();
   initAutofocus();     // OV5640 → 載入 AF 韌體 + 連續對焦(OV2640 自動略過)
   return true;
-}
-
-bool setCamFormat(pixformat_t fmt) {
-  esp_camera_deinit();
-  return initCamera(fmt);
 }
 
 // ------------------------------------------------------------------
@@ -240,7 +270,7 @@ int pollJoyDir() {
 void resetInput() { btnPressed = false; btnLong = false; joyArmed = false; }
 
 // ------------------------------------------------------------------
-// 拍照(RGB565 → JPEG → SD)
+// 拍照(原生 JPEG → SD)
 int nextIndex(const char *fmt) {
   int i = 0; char path[16];
   while (i < 99999) { snprintf(path, sizeof(path), fmt, i); if (!SD.exists(path)) break; i++; }
@@ -281,21 +311,16 @@ size_t buildExif(const char *dt) {
   return q;
 }
 
-// 拍照:暫時切到相機「原生 JPEG」輸出再存檔(顏色正確,和錄影同一條路,
-// 不經 RGB565→JPEG 轉換,徹底避開位元組順序問題)
+// 拍照:相機全程都在「原生 JPEG」模式,直接抓最新影格存檔(顏色正確,不用切換格式)
 void savePhoto() {
   if (!sdOK) { toast("No SD", COL_RED); delay(600); return; }
-  toast("Saving...", COL_WHITE);
-  if (!setCamFormat(PIXFORMAT_JPEG)) {
-    toast("Cam switch fail", COL_RED); delay(600);
-    setCamFormat(PIXFORMAT_RGB565); return;
-  }
   if (afReady) { toast("Focusing...", COL_WHITE); afWaitFocused(1500); }  // 等 OV5640 對焦鎖定
+  toast("Saving...", COL_WHITE);
   camera_fb_t *fb = NULL;
-  for (int i = 0; i < 4; i++) {           // 丟掉前幾張,讓曝光/白平衡穩定
+  for (int i = 0; i < 2; i++) {           // 取最新影格(grab_mode=LATEST)
     if (fb) esp_camera_fb_return(fb);
     fb = esp_camera_fb_get();
-    delay(40);
+    delay(20);
   }
   bool ok = false;
   if (fb) {
@@ -316,7 +341,6 @@ void savePhoto() {
     }
     esp_camera_fb_return(fb);
   }
-  setCamFormat(PIXFORMAT_RGB565);         // 切回即時取景
   toast(ok ? "Saved" : "Save fail", ok ? COL_GREEN : COL_RED);
   delay(600);
 }
@@ -594,22 +618,23 @@ void drawWifiDynamic() {
 // ------------------------------------------------------------------
 void enterSelected() {
   switch (menuSel) {
-    case 0: mode = FILTER; break;                // 相機已是 RGB565
+    case 0: mode = FILTER; break;                // 相機全程 JPEG,濾鏡靠感光元件 special_effect
     case 1: buildGalleryList(); galIdx = 0; mode = GALLERY; showPhoto(0); break;
-    case 2:
-      if (setCamFormat(PIXFORMAT_JPEG)) { recording = false; mode = VIDEO; gfx->fillScreen(COL_BLACK); }
-      else { drawMenu(); toast("Cam switch fail", COL_RED); delay(800); }
-      break;
+    case 2: recording = false; mode = VIDEO; gfx->fillScreen(COL_BLACK); break;   // 已是 JPEG,免切換
+    case 3: startWiFi(); mode = WIFIXFER; drawWifiStatic(); drawWifiDynamic(); break;  // WiFi Send
+    case 4: mode = LIVE; break;                                                    // Back
     case 3: startWiFi(); mode = WIFIXFER; drawWifiStatic(); drawWifiDynamic(); break;  // WiFi Send
     case 4: mode = LIVE; break;                                                    // Back
   }
 }
 
+// 即時取景:相機全程 JPEG,用 TJpg 解碼上螢幕(和錄影/相簿同一條路,顏色正確)
 void livePreview() {
   camera_fb_t *fb = esp_camera_fb_get();
   if (!fb) { delay(20); return; }
-  gfx->draw16bitBeRGBBitmap(0, 0, (uint16_t *)fb->buf, fb->width, fb->height);
+  TJpgDec.drawJpg(0, 0, fb->buf, fb->len);
   esp_camera_fb_return(fb);
+  drawReticle();     // tap-to-focus 準星(需要時)
 }
 
 // ------------------------------------------------------------------
@@ -672,7 +697,7 @@ void setup() {
   if (sdOK) { photoIndex = nextIndex("/IMG%05d.JPG"); Serial.printf("SD 就緒,下一張 %d\n", photoIndex); }
   else Serial.println("SD 掛載失敗:檢查卡片/格式 FAT32");
 
-  cameraOK = initCamera(PIXFORMAT_RGB565);
+  cameraOK = initCamera(PIXFORMAT_JPEG);   // 全程 JPEG:取景/拍照/錄影同一格式,不再切換
   if (!cameraOK) {
     gfx->fillScreen(COL_RED);
     gfx->setCursor(10, 10); gfx->println("Camera FAIL");
@@ -705,6 +730,14 @@ void loop() {
   switch (mode) {
     case LIVE:
       livePreview();
+      if (afReady) {                                   // 搖桿 = tap-to-focus 準星
+        const int st = 24;
+        if (dir == DIR_LEFT)  { reticleX = max(16, reticleX - st);                 reticleOn = true; reticleShownMs = millis(); afFocusAtReticle(); }
+        if (dir == DIR_RIGHT) { reticleX = min(gfx->width()  - 16, reticleX + st); reticleOn = true; reticleShownMs = millis(); afFocusAtReticle(); }
+        if (dir == DIR_UP)    { reticleY = max(16, reticleY - st);                 reticleOn = true; reticleShownMs = millis(); afFocusAtReticle(); }
+        if (dir == DIR_DOWN)  { reticleY = min(gfx->height() - 16, reticleY + st); reticleOn = true; reticleShownMs = millis(); afFocusAtReticle(); }
+        if (reticleOn && millis() - reticleShownMs > 3000) { reticleOn = false; afContinuous(); }  // 閒置回連續對焦
+      }
       if (btn == 1) { if (sdOK) savePhoto(); else { toast("No SD", COL_RED); delay(600); } }
       else if (btn == 2) { menuSel = 0; mode = MENU; drawMenu(); }
       break;
@@ -742,8 +775,7 @@ void loop() {
     case VIDEO: {
       if (btn == 2) {                        // 長按=返回
         if (recording) { aviEnd(); recording = false; }
-        setCamFormat(PIXFORMAT_RGB565);
-        mode = MENU; drawMenu(); break;
+        mode = MENU; drawMenu(); break;      // 已是 JPEG,免切回
       }
       if (btn == 1) {                        // 點按=開始/停止
         if (!recording) { if (sdOK && aviStart()) { recording = true; gfx->fillScreen(COL_BLACK); } }
