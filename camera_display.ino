@@ -2,7 +2,8 @@
  * camera_display.ino
  * ------------------------------------------------------------------
  * 迷你相機:XIAO ESP32-S3 Sense (OV2640 或 OV5640) → 2.4" ILI9341 SPI TFT
- *   換 OV5640:接線/腳位不變(自動偵測),只需 CAM_XCLK_HZ 設 20000000
+ *   換 OV5640:接線/腳位不變(自動偵測),CAM_XCLK_HZ 設 20000000;自動對焦自動啟用;
+ *             本機換 OV5640 後畫面上下顛倒,已把 CAM_VFLIP 設 1
  *   相機模式 :即時取景。點按搖桿=拍照;長按=開功能表
  *   功能表   :搖桿上下選、點按進入、長按回相機
  *     - Filter   濾鏡 :左右切特效、上下調亮度、點按返回
@@ -15,6 +16,7 @@
  * 函式庫:
  *   - GFX Library for Arduino (Arduino_GFX)
  *   - TJpg_Decoder (Bodmer)   ← 相簿/錄影預覽解碼 JPEG,需另裝
+ *   - OV5640 Auto Focus for ESP32 Camera (0015) ← OV5640 自動對焦,需另裝(OV2640 不影響)
  *   - esp_camera / SD 內建於 ESP32 核心(3.x)
  * 開發板:XIAO_ESP32S3 / PSRAM: OPI PSRAM(必開) / USB CDC On Boot: Enabled
  * SD 卡 :FAT32(勿用 exFAT)
@@ -34,6 +36,7 @@
 #include <Update.h>
 #include <time.h>
 #include <sys/time.h>
+#include "ESP32_OV5640_AF.h"   // OV5640 自動對焦(Library Manager 搜「OV5640 Auto Focus for ESP32 Camera」)
 #include "camera_pins.h"
 
 // ============ 顯示器 + SD 共用 SPI(GPIO 編號)============
@@ -79,8 +82,9 @@ bool rtcValid = false;               // RTC 是否已對時(手機瀏覽器連�
 // ============ 相機 ============
 // OV5640 建議 20MHz;若換回 OV2640 或看到損毀影格(EV-VSYNC-OVF),改成 10000000
 #define CAM_XCLK_HZ 20000000
-// 畫面方向(顛倒/鏡像就改這兩個):OV5640→VFLIP 0、OV2640→VFLIP 1
-#define CAM_VFLIP   0     // 上下翻(0/1)
+// 畫面方向(顛倒/鏡像就改這兩個)。此模組換 OV5640 後畫面上下顛倒 → VFLIP 設 1。
+// 若換回 OV2640 可能要改回 0;若同時左右相反,再把 HMIRROR 設 1(等同旋轉 180°)。
+#define CAM_VFLIP   1     // 上下翻(0/1);OV5640 於本機為 1
 #define CAM_HMIRROR 0     // 左右鏡像(0/1)
 
 // ============ 螢幕自動關閉 ============
@@ -103,6 +107,39 @@ File aviFile;
 bool recording = false;
 uint32_t aviFrames = 0, aviMovi = 0, aviStartMs = 0;
 char aviPath[16];
+
+// ============ OV5640 自動對焦 ============
+// 硬體:OV5640 模組的 AF-VCC 需接 3.3V,對焦馬達(VCM)才會動。
+// OV2640 沒有對焦馬達,以下全部會自動略過。
+OV5640 ov5640 = OV5640();
+bool isOV5640 = false;    // 開機時依感光元件 PID 偵測
+bool afReady  = false;    // AF 韌體是否載入成功
+
+// 每次相機 (重新) 初始化後呼叫:偵測 OV5640 → 下載 AF 韌體 → 開啟連續對焦。
+// 注意:切換 RGB565⇄JPEG 會重置感光元件,AF 韌體需重載,所以放在 initCamera() 尾端統一處理。
+void initAutofocus() {
+  sensor_t *s = esp_camera_sensor_get();
+  isOV5640 = (s && s->id.PID == 0x5640);   // OV5640 PID = 0x5640
+  afReady  = false;
+  if (!isOV5640) return;                    // OV2640 不需要對焦
+  ov5640.start(s);
+  if (ov5640.focusInit() == 0 && ov5640.autoFocusMode() == 0) {
+    afReady = true;                         // 連續對焦已啟動
+    Serial.println("OV5640 自動對焦就緒");
+  } else {
+    Serial.println("OV5640 AF 韌體載入失敗(檢查 AF-VCC 是否接 3.3V)");
+  }
+}
+
+// 拍照前等待連續對焦收斂,最多 waitMs 毫秒(0x10 = 已對焦)
+void afWaitFocused(uint32_t waitMs) {
+  if (!afReady) return;
+  uint32_t t0 = millis();
+  while (millis() - t0 < waitMs) {
+    if (ov5640.getFWStatus() == 0x10) return;   // FW_STATUS_S_FOCUSED
+    delay(30);
+  }
+}
 
 // ------------------------------------------------------------------
 // 相機
@@ -138,6 +175,7 @@ bool initCamera(pixformat_t fmt) {
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) { Serial.printf("相機初始化失敗:0x%x\n", err); return false; }
   applySensor();
+  initAutofocus();     // OV5640 → 載入 AF 韌體 + 連續對焦(OV2640 自動略過)
   return true;
 }
 
@@ -252,6 +290,7 @@ void savePhoto() {
     toast("Cam switch fail", COL_RED); delay(600);
     setCamFormat(PIXFORMAT_RGB565); return;
   }
+  if (afReady) { toast("Focusing...", COL_WHITE); afWaitFocused(1500); }  // 等 OV5640 對焦鎖定
   camera_fb_t *fb = NULL;
   for (int i = 0; i < 4; i++) {           // 丟掉前幾張,讓曝光/白平衡穩定
     if (fb) esp_camera_fb_return(fb);
