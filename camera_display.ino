@@ -459,7 +459,7 @@ void aviEnd() {
   seekWr32(aviFile, 140, aviFrames);                       // stream length
   seekWr32(aviFile, 216, fileSize - 220);                  // movi size
   aviFile.close();
-  Serial.printf("錄影完成 %s  %u 幀  %.1f fps\n", aviPath, aviFrames, fps);
+  Serial.printf("錄影完成 %s  %lu 幀  %.1f fps\n", aviPath, (unsigned long)aviFrames, fps);
 }
 
 // ==================================================================
@@ -621,8 +621,6 @@ void enterSelected() {
     case 0: mode = FILTER; break;                // 相機全程 JPEG,濾鏡靠感光元件 special_effect
     case 1: buildGalleryList(); galIdx = 0; mode = GALLERY; showPhoto(0); break;
     case 2: recording = false; mode = VIDEO; gfx->fillScreen(COL_BLACK); break;   // 已是 JPEG,免切換
-    case 3: startWiFi(); mode = WIFIXFER; drawWifiStatic(); drawWifiDynamic(); break;  // WiFi Send
-    case 4: mode = LIVE; break;                                                    // Back
     case 3: startWiFi(); mode = WIFIXFER; drawWifiStatic(); drawWifiDynamic(); break;  // WiFi Send
     case 4: mode = LIVE; break;                                                    // Back
   }
@@ -788,7 +786,7 @@ void loop() {
         gfx->fillRect(0, 0, gfx->width(), 30, COL_BLACK);
         gfx->fillCircle(14, 15, 7, COL_RED);
         gfx->setTextSize(2); gfx->setTextColor(COL_WHITE); gfx->setCursor(30, 8);
-        gfx->printf("REC %u  %us", aviFrames, (millis() - aviStartMs) / 1000);
+        gfx->printf("REC %lu  %lus", (unsigned long)aviFrames, (unsigned long)((millis() - aviStartMs) / 1000));
       } else {
         TJpgDec.drawJpg(0, 0, fb->buf, fb->len);   // 預覽
         gfx->fillRect(0, 0, gfx->width(), 20, COL_BLACK);
