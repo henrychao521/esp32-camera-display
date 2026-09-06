@@ -4,53 +4,236 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>XIAO ESP32-S3 迷你即時取景相機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;900&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: light dark; }
-  body {
-    font-family: -apple-system, "PingFang TC", "Noto Sans TC", sans-serif;
-    max-width: 640px; margin: 0 auto; padding: 2.5rem 1.25rem;
-    line-height: 1.7; background: #fafafa; color: #1a1a1a;
+  :root {
+    color-scheme: light dark;
+    --bg-color: #efe6d6;
+    --text-color: #1c1917;
+    --line-color: #1c1917;
   }
-  h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-  p.sub { color: #666; margin-top: 0; }
-  a.card {
-    display: block; padding: 1.1rem 1.25rem; margin: 0.9rem 0;
-    border: 1px solid #e0e0e0; border-radius: 12px; background: #fff;
-    text-decoration: none; color: #1a1a1a; transition: border-color .15s;
-  }
-  a.card:hover { border-color: #4a90d9; }
-  a.card b { display: block; font-size: 1.05rem; color: inherit; }
-  a.card span { color: #777; font-size: 0.9rem; }
-  footer { margin-top: 2rem; font-size: 0.85rem; color: #999; }
-  footer a { color: #4a90d9; }
-
-  /* 深色模式：放在最後，確保覆蓋上面的淺色基礎規則 */
   @media (prefers-color-scheme: dark) {
-    body { background: #16181c; color: #e8e8e8; }
-    p.sub { color: #a0a4ad; }
-    a.card { background: #22252b; border-color: #363a42; color: #e8e8e8; }
-    a.card:hover { border-color: #5aa0e0; }
-    a.card span { color: #9aa0aa; }
-    footer { color: #7a808a; }
-    footer a { color: #6ab0f0; }
+    :root {
+      --bg-color: #1c1917;
+      --text-color: #efe6d6;
+      --line-color: #efe6d6;
+    }
+  }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Hero Section */
+  .hero {
+    position: relative;
+    height: 70vh;
+    min-height: 480px;
+    background-image: linear-gradient(to right, rgba(28,25,23,0.85) 0%, rgba(28,25,23,0) 70%), url('img/camera-display.jpg');
+    background-size: cover;
+    background-position: center;
+    border-bottom: 2px solid var(--line-color);
+  }
+
+  .hero-text {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 1.25rem;
+    max-width: 90%;
+  }
+
+  .hero h1 {
+    font-weight: 900;
+    font-size: clamp(4rem, 8vw, 5rem);
+    color: #efe6d6;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.1;
+    word-break: keep-all;
+  }
+
+  .hero p.sub {
+    color: #efe6d6;
+    margin: 0;
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 400;
+  }
+
+  .sticky-note {
+    position: absolute;
+    top: 2.5rem;
+    right: 1.25rem;
+    background: #ffe36a;
+    color: #1c1917;
+    padding: 1rem 1.5rem;
+    font-weight: 900;
+    font-size: 1.1rem;
+    transform: rotate(3deg);
+    box-shadow: 4px 6px 0 rgba(0,0,0,.35);
+    max-width: 250px;
+  }
+
+  /* Content Region */
+  .content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+  }
+
+  /* Collage */
+  .collage {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+    padding: 4rem 0;
+    align-items: start;
+  }
+
+  .photo-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .photo-item img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    border: 3px solid var(--line-color);
+    border-radius: 4px;
+    display: block;
+  }
+
+  .photo-item p {
+    margin: 0.75rem 0 0 0;
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  .photo-item b {
+    font-weight: 900;
+    margin-right: 0.5rem;
+  }
+
+  .photo-1 {
+    grid-column: 1 / 8;
+  }
+
+  .photo-2 {
+    grid-column: 8 / 13;
+    margin-top: 8rem;
+  }
+
+  /* Links List */
+  .links {
+    border-top: 2px solid var(--line-color);
+    padding-bottom: 2rem;
+  }
+
+  .list-link {
+    display: block;
+    padding: 2rem 0;
+    border-bottom: 2px solid var(--line-color);
+    text-decoration: none;
+    color: var(--text-color);
+    min-height: 44px;
+    transition: padding-left 0.2s ease;
+  }
+
+  .list-link:hover {
+    padding-left: 1rem;
+  }
+
+  .list-link b {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+  }
+
+  .list-link span {
+    display: block;
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  /* Footer */
+  .site-footer {
+    padding: 2rem 0 4rem 0;
+    font-size: 1rem;
+  }
+
+  .site-footer a {
+    color: var(--text-color);
+    font-weight: 900;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .collage {
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+    }
+    .photo-2 {
+      margin-top: 0;
+    }
+    .hero h1 {
+      font-size: clamp(3.5rem, 12vw, 4rem);
+    }
   }
 </style>
 </head>
 <body>
-  <h1>📷 XIAO ESP32-S3 迷你即時取景相機</h1>
-  <p class="sub">Seeed XIAO ESP32-S3 Sense + ILI9341 手作相機:即時取景、拍照、濾鏡、相簿、MJPEG 錄影,搖桿操作。</p>
 
-  <a class="card" href="web/wiring-guide.html">
-    <b>🔌 互動接線圖</b>
-    <span>元件腳位對應與接線步驟</span>
-  </a>
-  <a class="card" href="web/devlog.html">
-    <b>📝 開發歷程</b>
-    <span>從構想到成品的完整開發紀錄</span>
-  </a>
+  <header class="hero">
+    <div class="sticky-note">隨身攜帶的手作相機</div>
+    <div class="hero-text">
+      <h1>一片板子，做完一台相機。</h1>
+      <p class="sub">Seeed XIAO ESP32-S3 Sense + ILI9341 手作相機：即時取景、拍照、濾鏡、相簿、MJPEG 錄影，搖桿操作。</p>
+    </div>
+  </header>
 
-  <footer>
-    原始碼與說明見 <a href="https://github.com/henrychao521/esp32-camera-display">GitHub repo</a>。
-  </footer>
+  <main class="content">
+    <section class="collage">
+      <div class="photo-item photo-1">
+        <img src="img/camera-filter.jpg" alt="濾鏡效果">
+        <p><b>濾鏡效果</b>即時取景與多種色彩濾鏡，一鍵切換拍攝風格。</p>
+      </div>
+      <div class="photo-item photo-2">
+        <img src="img/camera-side.jpg" alt="側面接線">
+        <p><b>側面接線</b>緊湊的硬體配置，展現手作硬核魅力。</p>
+      </div>
+    </section>
+
+    <section class="links">
+      <a class="card list-link" href="web/wiring-guide.html">
+        <b>互動接線圖</b>
+        <span>元件腳位對應與接線步驟</span>
+      </a>
+      <a class="card list-link" href="web/devlog.html">
+        <b>開發歷程</b>
+        <span>從構想到成品的完整開發紀錄</span>
+      </a>
+    </section>
+
+    <footer class="site-footer">
+      原始碼與說明見 <a href="https://github.com/henrychao521/esp32-camera-display">GitHub repo</a>。
+    </footer>
+  </main>
+
 </body>
 </html>
