@@ -37,7 +37,7 @@
     position: relative;
     height: 70vh;
     min-height: 480px;
-    background-image: linear-gradient(to right, rgba(28,25,23,0.85) 0%, rgba(28,25,23,0) 70%), url('img/camera-display.jpg');
+    background-image: linear-gradient(to right, rgba(28,25,23,0.85) 0%, rgba(28,25,23,0) 70%), image-set(url('img/camera-display.webp') type('image/webp'), url('img/camera-display.jpg') type('image/jpeg'));
     background-size: cover;
     background-position: center;
     border-bottom: 2px solid var(--line-color);
@@ -209,11 +209,11 @@
   <main class="content">
     <section class="collage">
       <div class="photo-item photo-1">
-        <img src="img/camera-filter.jpg" alt="濾鏡效果">
+        <picture><source type="image/webp" srcset="img/camera-filter.webp"><img src="img/camera-filter.jpg" width="900" height="675" alt="濾鏡效果" loading="lazy" decoding="async"></picture>
         <p><b>濾鏡效果</b>即時取景與多種色彩濾鏡，一鍵切換拍攝風格。</p>
       </div>
       <div class="photo-item photo-2">
-        <img src="img/camera-side.jpg" alt="側面接線">
+        <picture><source type="image/webp" srcset="img/camera-side.webp"><img src="img/camera-side.jpg" width="900" height="675" alt="側面接線" loading="lazy" decoding="async"></picture>
         <p><b>側面接線</b>緊湊的硬體配置，展現手作硬核魅力。</p>
       </div>
     </section>
