@@ -52,7 +52,9 @@
 
   .hero h1 {
     font-weight: 900;
-    font-size: clamp(4rem, 8vw, 5rem);
+    /* 4rem 的下限在 390px 手機上比容器還寬，整頁會多出 22px 橫向捲動 */
+    font-size: clamp(2.4rem, 8vw, 5rem);
+    overflow-wrap: anywhere;
     color: #efe6d6;
     margin: 0 0 0.5rem 0;
     line-height: 1.1;

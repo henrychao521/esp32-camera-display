@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
 <meta charset="utf-8">
 <title>XIAO ESP32-S3 相機接線教學</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -239,7 +242,8 @@
     <table>
       <thead><tr><th>線</th><th>顯示器絲印(別名)</th><th>接到 XIAO</th><th>GPIO</th></tr></thead>
       <tbody>
-        <tr><td><span class="sw" style="background:#E5484D"></span>電源</td><td>VCC + BLK(背光)</td><td class="code">3V3</td><td class="code">—</td></tr>
+        <tr><td><span class="sw" style="background:#E5484D"></span>電源</td><td>VCC</td><td class="code">3V3</td><td class="code">—</td></tr>
+        <tr><td><span class="sw" style="background:#E5484D"></span>背光</td><td>BLK(背光)</td><td class="code">D6</td><td class="code">GPIO43</td></tr>
         <tr><td><span class="sw" style="background:#5C626B"></span>接地</td><td>GND</td><td class="code">GND</td><td class="code">—</td></tr>
         <tr><td><span class="sw" style="background:#9B6BE8"></span>SCL</td><td>SCL(= SCK 時脈)</td><td class="code">D8</td><td class="code">GPIO7</td></tr>
         <tr><td><span class="sw" style="background:#EE8B3C"></span>SDA</td><td>SDA(= MOSI 資料)</td><td class="code">D10</td><td class="code">GPIO9</td></tr>
@@ -297,10 +301,10 @@
           <line x1="70" y1="20" x2="77" y2="28"/><line x1="160" y1="56" x2="150" y2="56"/>
           <line x1="60" y1="56" x2="70" y2="56"/>
         </g>
-        <text x="110" y="108" text-anchor="middle" fill="var(--muted)" font-family="var(--mono)" font-size="9">VCC+BLK → 3V3</text>
+        <text x="110" y="108" text-anchor="middle" fill="var(--muted)" font-family="var(--mono)" font-size="9">VCC → 3V3 · BLK → D6</text>
       </svg>
       <h3>亮背光</h3>
-      <p>VCC 與 BLK 都接 3V3,螢幕背光亮起。全程用 3.3V,不要接 5V。</p>
+      <p>VCC 接 3V3、BLK 接 <b>D6(GPIO43)</b>，螢幕背光亮起且能由程式關閉——韌體的 <code>BLK_PIN</code> 預設就是 43，休眠時才真的關得掉背光。若把 BLK 直接接 3V3，請同時把韌體改成 <code>#define BLK_PIN -1</code>，否則休眠只會清空畫面、背光仍亮。注意 GPIO43 是 U0TXD，占用它會失去序列埠傳送腳。全程用 3.3V,不要接 5V。</p>
     </div>
 
     <div class="panel">
@@ -1250,3 +1254,4 @@ void loop() {
     });
   })();
 </script>
+</html>
